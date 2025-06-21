@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package email;
+
+option go_package = "pedidos-redis-grpc/proto;email";
+
+service EmailService {
+  rpc SendConfirmation (EmailRequest) returns (EmailResponse);
+}
+
+message EmailRequest {
+  string order_id = 1;
+  string body = 2;
+}
+
+message EmailResponse {
+  string status = 1;
+}

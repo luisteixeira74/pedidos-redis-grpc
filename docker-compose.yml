@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - order-net
+
+  email-service:
+    build:
+      context: .                      # contexto da raiz do mono-repo
+      dockerfile: email-service/Dockerfile
+    container_name: email-service
+    ports:
+      - "50051:50051"
+    networks:
+      - order-net
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  order-processor:
+    build:
+      context: .                      # precisa também usar contexto da raiz
+      dockerfile: order-processor/Dockerfile
+    container_name: order-processor
+    depends_on:
+      - redis
+      - email-service
+    networks:
+      - order-net
+
+  order-publisher:
+    build:
+      context: .                # raiz do projeto
+      dockerfile: order-publisher/Dockerfile
+    container_name: order-publisher
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+    networks:
+      - order-net
+
+networks:
+  order-net:
